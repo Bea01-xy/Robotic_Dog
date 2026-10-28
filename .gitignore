@@ -1,0 +1,23 @@
+# IDE / editor
+.idea
+.vscode
+cmake-build-debug
+
+# CMake build
+CMakeFiles
+CMakeCache.txt
+cmake_install.cmake
+build.ninja
+build
+.cache
+compile_commands.json
+
+# OS
+.DS_Store
+
+# Misc
+*.deb
+Tutorial
+Log
+Info
+

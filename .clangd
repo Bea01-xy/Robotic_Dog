@@ -1,0 +1,43 @@
+CompileFlags:
+  CompilationDatabase: build/Debug
+  Add:
+    - -DDEBUG
+    - -DSTM32H723xx
+    - -DUSE_HAL_DRIVER
+    - -DUSE_PWR_LDO_SUPPLY
+    - -ICore/Inc
+    - -IUSB_DEVICE/App
+    - -IUSB_DEVICE/Target
+    - -IDrivers/CMSIS/Include
+    - -IDrivers/CMSIS/Device/ST/STM32H7xx/Include
+    - -IDrivers/STM32H7xx_HAL_Driver/Inc
+    - -IDrivers/STM32H7xx_HAL_Driver/Inc/Legacy
+    - -IMiddlewares/ST/STM32_USB_Device_Library/Core/Inc
+    - -IMiddlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc
+    - -IMiddlewares/Third_Party/FreeRTOS/Source/include
+    - -IMiddlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS
+    - -IMiddlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F
+    - -IApp
+    - -IBSP
+    - -IDevice
+    - -IDevice/Motor
+    - -IDevice/Remote
+    - -IDevice/IMU
+    - -IDevice/Buzzer
+    - -IDevice/WS2812
+    - -IDevice/MiniPC
+    - -IAlgorithm
+    - -ISystem
+    - -IConfig
+
+  # 从 compile_commands.json 传给 clangd 时，移除它不支持的选项
+  Remove:
+    - -mthumb-interwork
+    - -mabi=*
+    - -fno-allow-store-data-races
+    - -mfpu=*
+Index:
+  Background: Build
+Diagnostics:
+  UnusedIncludes: None
+  MissingIncludes: None
