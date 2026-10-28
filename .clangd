@@ -27,7 +27,6 @@ CompileFlags:
     - -IDevice/WS2812
     - -IDevice/MiniPC
     - -IAlgorithm
-    - -ISystem
     - -IConfig
 
   # 从 compile_commands.json 传给 clangd 时，移除它不支持的选项

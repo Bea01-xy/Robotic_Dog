@@ -52,8 +52,6 @@ file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS
         "Device/*.h"
         "Algorithm/*.c"
         "Algorithm/*.h"
-        "System/*.c"
-        "System/*.h"
         "App/*.c"
         "App/*.h"
         "Config/*.h"
@@ -79,7 +77,6 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         Device/Buzzer
         Device/WS2812
         Device/MiniPC
-        System
         Config
         App
         BSP
