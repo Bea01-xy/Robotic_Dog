@@ -63,15 +63,24 @@
 #define MOTOR_RS_PROTOCOL_TYPE      0x19U
 
 /**
- * @brief Default RS04 instance. Change MOTOR_RS04_CAN_ID/HOST_CAN_ID to match
- *        the IDs configured in the motor.
+ * @brief Default RS04 instances. Change the CAN IDs to match the motors.
  */
-Motor_RS_Info_Typedef Motor_RS04 = {
-    .Control_Mode = MOTOR_RS_CTRL_MIT,
-    .Param_Range  = MOTOR_RS04_PARAM_RANGE_INIT,
-    .FDCANFrame = {
-        .TxIdentifier = MOTOR_RS04_CAN_ID,
-        .RxIdentifier = MOTOR_RS04_HOST_CAN_ID,
+Motor_RS_Info_Typedef Motor_RS04[MOTOR_RS04_NUM] = {
+    [0] = {
+        .Control_Mode = MOTOR_RS_CTRL_MIT,
+        .Param_Range  = MOTOR_RS04_PARAM_RANGE_INIT,
+        .FDCANFrame = {
+            .TxIdentifier = MOTOR_RS04_1_CAN_ID,
+            .RxIdentifier = MOTOR_RS04_HOST_CAN_ID,
+        },
+    },
+    [1] = {
+        .Control_Mode = MOTOR_RS_CTRL_MIT,
+        .Param_Range  = MOTOR_RS04_PARAM_RANGE_INIT,
+        .FDCANFrame = {
+            .TxIdentifier = MOTOR_RS04_2_CAN_ID,
+            .RxIdentifier = MOTOR_RS04_HOST_CAN_ID,
+        },
     },
 };
 

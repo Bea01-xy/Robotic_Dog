@@ -158,7 +158,8 @@ void USER_FDCAN_AddMessageToTxFifoQ(FDCAN_TxFrame_TypeDef *FDCAN_TxFrame){
   */
 static void FDCAN1_RxFifo0RxHandler(uint32_t *Identifier,uint8_t Data[8])
 {
-	RS_Motor_Info_Update(Identifier, Data, &Motor_RS04);
+	RS_Motor_Info_Update(Identifier, Data, &Motor_RS04[0]);
+	RS_Motor_Info_Update(Identifier, Data, &Motor_RS04[1]);
 }
 
 /**

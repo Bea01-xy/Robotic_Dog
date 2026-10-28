@@ -48,8 +48,8 @@ void Detect_Task(void const * argument)
                 (float)remote_ctrl.rc.sw[RC_L],
                 (float)remote_ctrl.rc.s[RC_L],
                 #endif
-                Motor_RS04.Data.Position,
-                Motor_RS04.Data.Velocity,
+                Motor_RS04[0].Data.Position,
+                Motor_RS04[0].Data.Velocity,
             };
             (void)USART10_Vofa_SendFloat(vofa_data, 2U);
         }

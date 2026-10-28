@@ -25,12 +25,13 @@
   * This module is standalone and does not depend on Motor_DM/Motor_DJI.
   *
   * Typical use on the selected CAN bus:
-  *   RS_Motor_Command(&FDCAN1_TxFrame, &Motor_RS04, MOTOR_RS_ENABLE);
-  *   RS_Motor_CAN_TxMessage(&FDCAN1_TxFrame, &Motor_RS04,
+  *   RS_Motor_Command(&FDCAN1_TxFrame, &Motor_RS04[0], MOTOR_RS_ENABLE);
+  *   RS_Motor_CAN_TxMessage(&FDCAN1_TxFrame, &Motor_RS04[0],
   *                           pos_rad, vel_rad_s, kp, kd, torque_nm);
   *
   * Feedback: call RS_Motor_Info_Update() from the matching RX handler:
-  *   RS_Motor_Info_Update(Identifier, Data, &Motor_RS04);
+  *   RS_Motor_Info_Update(Identifier, Data, &Motor_RS04[0]);
+  *   RS_Motor_Info_Update(Identifier, Data, &Motor_RS04[1]);
   *
   * To change control mode, stop the motor first, then:
   *   MOTOR_RS_DISABLE -> MOTOR_RS_SET_*_MODE -> MOTOR_RS_ENABLE
@@ -57,8 +58,11 @@
 
 /* Motor CAN ID used by this project. The motor must also be configured to ID 2.
  * Host CAN ID remains the RobStride default 0xFD. */
-#ifndef MOTOR_RS04_CAN_ID
-#define MOTOR_RS04_CAN_ID    0x02U
+#ifndef MOTOR_RS04_1_CAN_ID
+#define MOTOR_RS04_1_CAN_ID    0x01U
+#endif
+#ifndef MOTOR_RS04_2_CAN_ID
+#define MOTOR_RS04_2_CAN_ID    0x02U
 #endif
 
 #ifndef MOTOR_RS04_HOST_CAN_ID
@@ -183,7 +187,8 @@ typedef struct
 } Motor_RS_Info_Typedef;
 
 /* Externs ------------------------------------------------------------------*/
-extern Motor_RS_Info_Typedef Motor_RS04;
+#define MOTOR_RS04_NUM 2U
+extern Motor_RS_Info_Typedef Motor_RS04[MOTOR_RS04_NUM];
 
 /**
   * @brief  Switch the motor CAN protocol using private-protocol type 25.
