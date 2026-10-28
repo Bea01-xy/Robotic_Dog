@@ -16,6 +16,7 @@
 #include "CAN_Task.h"
 #include "bsp_can.h"
 #include "Motor_RS.h"
+#include "Remote_Control.h"
 
 /* RS04 test motion: constant 1 rad/s in speed mode, motor CAN ID = 2. */
 #define RS04_TARGET_SPEED_RAD_S       1.0f
@@ -24,7 +25,7 @@
 
 /* Send the private-protocol type-25 switch frame once per boot.
  * The motor applies the new protocol only after it is power-cycled. */
-#define RS04_SEND_PROTOCOL_SWITCH     1
+#define RS04_SEND_PROTOCOL_SWITCH     0
 
 /* USER CODE BEGIN Header_CAN_Task */
 /**
@@ -61,3 +62,4 @@ void CAN_Task(void const * argument)
         osDelay(1);
     }
 }
+

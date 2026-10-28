@@ -44,6 +44,18 @@
  */
 #define RC_CH_VALUE_OFFSET		1024U
 
+/* Joystick channel indices in remote_ctrl.rc.ch[]. */
+#define RC_RX 0U
+#define RC_RY 1U
+#define RC_LX 2U
+#define RC_LY 3U
+#define RC_VA 4U
+#define RC_VB 5U
+
+/* Side index for rc.sw[] and rc.s[]: 0 = right, 1 = left. */
+#define RC_R 0U
+#define RC_L 1U
+
 /* Three-position switch values decoded from SBUS. */
 #define RC_SW_UP                ((uint16_t)1)
 #define RC_SW_MID               ((uint16_t)3)
