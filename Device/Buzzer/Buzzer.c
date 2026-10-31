@@ -28,6 +28,11 @@
 static TIM_HandleTypeDef  hbuzzer_tim;
 static uint8_t            buzzer_inited = 0;
 
+/* Non-blocking demo playback state. */
+static uint32_t           music_index = 0U;
+static uint32_t           music_note_elapsed = 0U;
+static bool               music_note_started = false;
+
 /**
   * @brief  音高表 — 简谱 7 音 × 4 个八度
   * @note   arr[oct+1][deg-1], oct: -1=低音, 0=中音, 1=高音, 2=倍高
@@ -351,51 +356,6 @@ static const buzzer_note_t you_melody[] = {
 #undef YOU_S1
 #undef YOU_SDOT
 
-/* ======================== 旋律模板 (参考, 已注释) ======================== */
-#if 0
-/* Creep (Radiohead) intro — G 大调 BPM=92 */
-#define CREEP_BPM  92
-#define CREEP_S16  (60000u / CREEP_BPM / 4)
-#define CREEP_S8   (CREEP_S16 * 2)
-#define CREEP_S4   (CREEP_S16 * 4)
-#define CREEP_S2   (CREEP_S16 * 8)
-#define CREEP_S1   (CREEP_S16 * 16)
-#define CREEP_SDOT(t)  ((t) * 3 / 2)
-
-static const buzzer_note_t creep_melody[] = {
-    // "When you were here before"
-    {  0, 0, CREEP_S4  },
-    {  0, 0, CREEP_S4  },
-    {  0, 2, CREEP_S16 },
-    {  0, 2, CREEP_S16 },
-    {  0, 1, CREEP_S16 },
-    { -1, 7, CREEP_S16 },
-    { -1, 7, CREEP_S16 },
-    {  0, 1, CREEP_S16 },
-    {  0, 1, CREEP_S8  },
-    {  0, 1, CREEP_S1  },
-    // "Couldn't look you in the eye"
-    {  0, 0, CREEP_S4  },
-    {  0, 0, CREEP_S8  },
-    { -1, 5, CREEP_S16 },
-    { -1, 5, CREEP_S16 },
-    {  0, 2, CREEP_S16 },
-    {  0, 1, CREEP_S16 },
-    { -1, 7, CREEP_S16 },
-    { -1, 7, CREEP_S16 },
-    { -1, 7, CREEP_S4 },
-    { -1, 7, CREEP_S1 },
-};
-
-#undef CREEP_BPM
-#undef CREEP_S16
-#undef CREEP_S8
-#undef CREEP_S4
-#undef CREEP_S2
-#undef CREEP_S1
-#undef CREEP_SDOT
-#endif /* 0 */
-
 /* ======================== 私有函数 ======================== */
 
 /**
@@ -527,7 +487,7 @@ void Buzzer_PlayNote(uint16_t arr, uint16_t duration_ms)
   * @brief  播放示例旋律 (阻塞)
   * @note   播放完毕后返回, 此后可正常使用 Buzzer 其他 API
   */
-void Buzzer_Demo(void)
+void Buzzer_Music(void)
 {
     uint32_t i, n;
 
@@ -553,4 +513,69 @@ void Buzzer_Demo(void)
 
     /* 结束后静音 */
     Buzzer_Stop();
+}
+
+void Buzzer_Music_Start(void)
+{
+    if (!buzzer_inited) {
+        Buzzer_Init();
+    }
+
+    music_index = 0U;
+    music_note_elapsed = 0U;
+    music_note_started = false;
+    Buzzer_Stop();
+}
+
+void Buzzer_Music_Pause(void)
+{
+    music_note_started = false;
+    Buzzer_Stop();
+}
+
+bool Buzzer_Music_Step(uint32_t elapsed_ms)
+{
+    uint32_t n;
+
+    if (!buzzer_inited) {
+        Buzzer_Init();
+    }
+
+    n = sizeof(you_melody) / sizeof(you_melody[0]);
+
+    while (elapsed_ms > 0U) {
+        if (music_index >= n) {
+            Buzzer_Stop();
+            return true;
+        }
+
+        if (!music_note_started) {
+            int8_t  oct_minus1 = you_melody[music_index].oct - 1;
+            uint8_t deg = you_melody[music_index].deg;
+
+            if (deg == 0 || oct_minus1 < -1 || oct_minus1 > 2) {
+                Buzzer_Stop();
+            } else {
+                buzzer_set_arr(note_arr[oct_minus1 + 1][deg - 1]);
+            }
+            music_note_started = true;
+        }
+
+        uint16_t ms = you_melody[music_index].ms;
+        uint32_t remain = (ms > music_note_elapsed)
+                              ? ((uint32_t)ms - music_note_elapsed)
+                              : 0U;
+
+        if (elapsed_ms < remain) {
+            music_note_elapsed += elapsed_ms;
+            return false;
+        }
+
+        elapsed_ms -= remain;
+        music_index++;
+        music_note_elapsed = 0U;
+        music_note_started = false;
+    }
+
+    return false;
 }

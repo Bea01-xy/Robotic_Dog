@@ -16,7 +16,7 @@
   *   Buzzer_PlayNote(NOTE_MIDDLE_C, 500);  // 中音 Do, 500ms
   *   Buzzer_SetFreq(440);                    // A4
   *   Buzzer_Stop();
-  *   Buzzer_Demo();                          // 播放示例旋律
+ *   Buzzer_Music();                         // 播放示例旋律
   *
   ******************************************************************************
   */
@@ -29,6 +29,7 @@ extern "C" {
 #endif
 
 #include <stdint.h>
+#include <stdbool.h>
 
 /* ======================== 音高宏 ======================== */
 /* 简谱 7 音 (do re mi fa so la ti) × 4 个八度               */
@@ -87,7 +88,24 @@ void Buzzer_PlayNote(uint16_t arr, uint16_t duration_ms);
   * @brief  播放示例旋律 (阻塞, 使用 osDelay)
   * @note   在 Detect_Task 启动时调用一次, 播放完毕后返回
   */
-void Buzzer_Demo(void);
+void Buzzer_Music(void);
+
+/**
+  * @brief  从头开始非阻塞 Demo 播放
+  */
+void Buzzer_Music_Start(void);
+
+/**
+  * @brief  非阻塞 Demo 播放推进
+  * @param  elapsed_ms 本次推进的时间, 单位 ms
+  * @retval true: 整首曲子播放完成; false: 仍在播放
+  */
+bool Buzzer_Music_Step(uint32_t elapsed_ms);
+
+/**
+  * @brief  暂停非阻塞 Demo 播放, 保留当前音符和已播放时间
+  */
+void Buzzer_Music_Pause(void);
 
 #ifdef __cplusplus
 }
