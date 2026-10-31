@@ -32,6 +32,8 @@ RS04 参数量程：
 | API | 作用 |
 |---|---|
 | `RS_Motor_ProtocolSwitch()` | 切换 CAN 协议：私有 / CANopen / MIT |
+| `RS_Motor_SetCanId()` | 修改电机 CAN ID（MIT 指令 7） |
+| `RS_Motor_ScanIds()` | 上电扫描 CAN1 上的 MIT 电机 ID，结果供 Detect_Task 上报 |
 | `RS_Motor_Command()` | 使能、失能、标零、清错、切换运行模式 |
 | `RS_Motor_CAN_TxMessage()` | 发送 MIT 运控帧 |
 | `RS_Motor_Position_CAN_TxMessage()` | 发送位置模式帧 |
@@ -126,6 +128,79 @@ Motor_RS04.Data.Fault
 Motor_RS04.Data.Warning
 Motor_RS04.Data.offline
 ```
+
+### 2.6 修改电机 CAN ID
+
+```c
+bool RS_Motor_SetCanId(FDCAN_TxFrame_TypeDef *FDCAN_TxFrame,
+                       Motor_RS_Info_Typedef *RS_Motor,
+                       uint8_t NewCanId);
+```
+
+发送 MIT 指令 7（标准帧，发往电机**当前** ID）：
+
+```text
+ID   = 当前电机 CAN ID
+Data = FF FF FF FF FF FF <NewCanId> FA
+```
+
+`NewCanId` 范围 `1~127`。函数返回 `true` 表示帧已提交，同时把
+`RS_Motor->FDCANFrame.TxIdentifier` 更新为 `NewCanId`，后续控制帧自动使用新 ID。
+
+示例：把 `Motor_RS04[1]` 从 `0x7F` 改为 `0x02`。
+
+```c
+/* 确保按电机当前 ID 寻址 */
+Motor_RS04[1].FDCANFrame.TxIdentifier = 0x7FU;
+
+/* 1. 先停止 */
+RS_Motor_Command(&FDCAN1_TxFrame, &Motor_RS04[1], MOTOR_RS_DISABLE);
+osDelay(20);
+
+/* 2. 改 ID：发到 0x7F，Data = FF FF FF FF FF FF 02 FA */
+if (RS_Motor_SetCanId(&FDCAN1_TxFrame, &Motor_RS04[1], 0x02U))
+{
+    osDelay(50);
+
+    /* 3. 保存（固件 >= 0.4.1.29） */
+    RS_Motor_Command(&FDCAN1_TxFrame, &Motor_RS04[1], MOTOR_RS_SAVE_PARAMS);
+    osDelay(50);
+}
+```
+
+注意：
+
+- 必须先用 `MOTOR_RS_DISABLE` 停止电机。
+- 新 ID 不能与总线上其它电机冲突。
+- 电机按当前 ID 寻址；旧 ID 错误时命令不会生效。
+- 保存后建议给电机断电重启一次，确认新 ID 已写入。
+- `MOTOR_RS_SAVE_PARAMS` 需要固件 ≥ 0.4.1.29。
+
+### 2.7 扫描 ID 并通过 USART10 上报
+
+`CAN_Task` 启动时调用一次 `RS_Motor_ScanIds(&FDCAN1_TxFrame)`：
+
+- 扫描 ID `1~127`，每个 ID 发送停止指令 `FF FF FF FF FF FF FF FD`，等待 10 ms，整轮约 1.27 s。
+- 仅接受 CAN1 的标准 8 字节数据帧；主机 ID 必须等于 `MOTOR_RS04_HOST_CAN_ID`（默认 `0xFD`），反馈 `Byte0` 必须等于当前探测 ID。
+- 接收识别发生在已配置的 `Motor_RS04[]` ID 过滤之前，因此能发现配置中不存在的 ID。
+- 结果保存在 `Motor_RS_ScanResult`：`Ids[]` 为升序 ID 列表，`Count` 为发现数量，`Complete` 为整轮扫描完成标记。重复应答不重复计数。
+- 不修改电机 ID，也不自动改变 `Motor_RS04[]` 配置。扫描一次后保持结果，重新扫描需重启 MCU。
+
+`Detect_Task` 每 10 ms 调用 `USART10_Vofa_SendFloat()`，发送固定 5 个 float：
+
+| VOFA 通道（从 0 开始） | 内容 |
+|---|---|
+| 0 | `Motor_RS04[1].Data.Position`，原位置通道 |
+| 1 | `Motor_RS04[1].Data.Velocity`，原速度通道 |
+| 2 | 扫描到的电机 ID；多颗电机每 500 ms 轮流显示，未发现时为 `0` |
+| 3 | 已发现电机数量 |
+| 4 | 扫描完成标记：`0` 正在扫描，`1` 扫描结束 |
+
+例如仅连接 ID 为 `0x7F` 的电机，扫描后通道 2、3、4 分别为 `127、1、1`。
+没有有效反馈时扫描结束后为 `0、0、1`。扫描结果表示本次上电时的发现情况，不是持续在线检测。
+
+要求：电机已处于 MIT 协议，CAN 波特率与固件一致，主机 ID 为上述配置值。私有协议或 CANopen 电机不能用本扫描发现。
+**扫描会停止响应的电机；扫描完成后继续执行原有遥控控制逻辑，拨杆处于运行位时电机会再次被使能。**
 
 ## 3. MIT 运控实现
 

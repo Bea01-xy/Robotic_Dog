@@ -50,6 +50,17 @@ void CAN_Task(void const * argument)
     RS_Motor_Command(&FDCAN1_TxFrame, &Motor_RS04[1], MOTOR_RS_DISABLE);
     osDelay(RS04_STARTUP_DELAY_MS);
 
+    #if 0
+    if (RS_Motor_SetCanId(&FDCAN1_TxFrame, &Motor_RS04[1], 0x05U))
+    {
+        osDelay(50);
+
+        /* 3. 保存（固件 >= 0.4.1.29） */
+        RS_Motor_Command(&FDCAN1_TxFrame, &Motor_RS04[1], MOTOR_RS_SAVE_PARAMS);
+        osDelay(50);
+    }
+    #endif
+
     RS_Motor_Command(&FDCAN1_TxFrame, &Motor_RS04[0], MOTOR_RS_SET_SPEED_MODE);
     RS_Motor_Command(&FDCAN1_TxFrame, &Motor_RS04[1], MOTOR_RS_SET_SPEED_MODE);
     osDelay(RS04_STARTUP_DELAY_MS);

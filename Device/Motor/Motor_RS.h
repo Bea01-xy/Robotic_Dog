@@ -59,10 +59,10 @@
 /* Motor CAN ID used by this project. The motor must also be configured to ID 2.
  * Host CAN ID remains the RobStride default 0xFD. */
 #ifndef MOTOR_RS04_1_CAN_ID
-#define MOTOR_RS04_1_CAN_ID    0x01U
+#define MOTOR_RS04_1_CAN_ID    0x03U
 #endif
 #ifndef MOTOR_RS04_2_CAN_ID
-#define MOTOR_RS04_2_CAN_ID    0x02U
+#define MOTOR_RS04_2_CAN_ID    0x05U
 #endif
 
 #ifndef MOTOR_RS04_HOST_CAN_ID
@@ -186,6 +186,24 @@ typedef struct
     Motor_RS_Data_Typedef         Data;
 } Motor_RS_Info_Typedef;
 
+/* Startup discovery results; IDs are published in ascending order. */
+#define MOTOR_RS_SCAN_MAX_ID 127U
+typedef struct
+{
+    uint8_t Ids[MOTOR_RS_SCAN_MAX_ID];
+    uint8_t Count;
+    bool Complete;
+} Motor_RS_ScanResult_Typedef;
+
+extern volatile Motor_RS_ScanResult_Typedef Motor_RS_ScanResult;
+
+/* Scan MIT IDs 1..127 with DISABLE commands; call once from a task on CAN1.
+ * Blocks for about 1.27 s. Does not change Motor_RS04 IDs or enable motors. */
+extern void RS_Motor_ScanIds(FDCAN_TxFrame_TypeDef *FDCAN_TxFrame);
+
+/* RX hook for a standard, 8-byte data frame, before per-motor ID filtering. */
+extern void RS_Motor_ScanFeedback(uint32_t Identifier, const uint8_t *Rx_Buf);
+
 /* Externs ------------------------------------------------------------------*/
 #define MOTOR_RS04_NUM 2U
 extern Motor_RS_Info_Typedef Motor_RS04[MOTOR_RS04_NUM];
@@ -203,6 +221,21 @@ extern Motor_RS_Info_Typedef Motor_RS04[MOTOR_RS04_NUM];
 extern void RS_Motor_ProtocolSwitch(FDCAN_TxFrame_TypeDef *FDCAN_TxFrame,
                                     Motor_RS_Info_Typedef *RS_Motor,
                                     Motor_RS_Protocol_e Protocol);
+
+/**
+  * @brief  Change the motor CAN ID (MIT command 7).
+  * @param  FDCAN_TxFrame transmit frame to prepare
+  * @param  RS_Motor      motor instance (uses the current motor ID)
+  * @param  NewCanId      new motor CAN ID, 1..127
+  * @retval true if the command was queued, false on NULL/bad ID
+  * @note   Stop the motor first; frame is sent to the current ID:
+  *           Data = FF FF FF FF FF FF <NewCanId> FA
+  *         On return TxIdentifier is updated to NewCanId.
+  *         Send MOTOR_RS_SAVE_PARAMS afterwards to keep it after power-off.
+  */
+extern bool RS_Motor_SetCanId(FDCAN_TxFrame_TypeDef *FDCAN_TxFrame,
+                              Motor_RS_Info_Typedef *RS_Motor,
+                              uint8_t NewCanId);
 
 /**
   * @brief  Send enable/disable/zero/mode command to an RS motor.

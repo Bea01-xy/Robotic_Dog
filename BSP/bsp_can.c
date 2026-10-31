@@ -174,9 +174,18 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
 {
 	(void)RxFifo0ITs;
 
-	HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &FDCAN_RxFIFO0Frame.Header, FDCAN_RxFIFO0Frame.Data);
+	if (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &FDCAN_RxFIFO0Frame.Header,
+	                         FDCAN_RxFIFO0Frame.Data) != HAL_OK) {
+		return;
+	}
 
 	if(hfdcan == &hfdcan1) {
+		if (FDCAN_RxFIFO0Frame.Header.IdType == FDCAN_STANDARD_ID &&
+		    FDCAN_RxFIFO0Frame.Header.RxFrameType == FDCAN_DATA_FRAME &&
+		    FDCAN_RxFIFO0Frame.Header.DataLength == FDCAN_DLC_BYTES_8) {
+			RS_Motor_ScanFeedback(FDCAN_RxFIFO0Frame.Header.Identifier,
+			                     FDCAN_RxFIFO0Frame.Data);
+		}
 		FDCAN1_RxFifo0RxHandler(&FDCAN_RxFIFO0Frame.Header.Identifier,FDCAN_RxFIFO0Frame.Data);
 	}
 }
